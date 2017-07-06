@@ -140,8 +140,6 @@ class PluginDir(object):
 class PluginManager(object):
     ''' Object that holds various information about multiple `plugins` '''
 
-    #path_map = OrderedDict()
-
     def __init__(self, path, module_globals):
         path = os.path.realpath(path) # Just in case
         path_map = {}
@@ -189,8 +187,6 @@ class PluginManager(object):
     def updateGlobals(self, newglobals):
         for path, plugin in self.path_map.items():
             plugin.updateGlobals(newglobals) 
-            #self.module_globals.update(newglobals)
-    
  
     def getByName(self, name):
         ''' Return list of plugin objects matching given name '''
@@ -223,10 +219,3 @@ class PluginManager(object):
         if out:
             return out.module
         return out
-
-#em = EventManager()
-#pm = PluginManager('plugins.d', {'eventManager': em})
-
-#for plugin in pm.plugins:
-#    print '\nRunning:', plugin.path, '\n','-'*10
-#    plugin.module.run()
