@@ -1,6 +1,7 @@
 """Enable/Disable cert auto-renew"""
 
-from os import chmod, stat, path
+from os import chmod, stat, path, getenv
+import sys
 
 CRON_PATH='/etc/cron.daily/confconsole-dehydrated'
 
@@ -20,19 +21,31 @@ def check_cron():
         return 'fail'
 
 def run():
+    ev_enabled = 'enabled' if getenv('CC_LETSENCRYPT_AUTORENEW') == 'y' else 'disabled'
+
     enabled = check_cron()
     if enabled == 'fail':
         msg = '''Cron job for dehydrated does not exist.\nPlease "Get certificate" first.'''
-        r = console.msgbox('Error', msg)
+        if interactive:
+            r = console.msgbox('Error', msg)
+        sys.stderr.write('Error: %s\n' % msg)
     else:
         status = 'enabled' if enabled else 'disabled'
         msg = '''Automatic certificate renewal is currently {}''' 
-        r = console._wrapper('yesno', msg.format(status), 10, 30, yes_label='Toggle', no_label='Ok')
-        while r == 0:
-            if enabled:
-                disable_cron()
-            else:
-                enable_cron()
-            enabled = check_cron()
-            status = 'enabled' if enabled else 'disabled'
-            r = console._wrapper('yesno', msg.format(status), 10, 30, yes_label='Toggle', no_label='Ok') 
+
+        if interactive:
+            r = console._wrapper('yesno', msg.format(status), 10, 30, yes_label='Toggle', no_label='Ok')
+            while r == 0:
+                if enabled:
+                    disable_cron()
+                else:
+                    enable_cron()
+                enabled = check_cron()
+                status = 'enabled' if enabled else 'disabled'
+                r = console._wrapper('yesno', msg.format(status), 10, 30, yes_label='Toggle', no_label='Ok') 
+        else:
+            if status != ev_enabled:
+                if ev_enabled == 'enabled':
+                    enable_cron()
+                else:
+                    disable_cron()

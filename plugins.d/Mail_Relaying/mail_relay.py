@@ -57,11 +57,17 @@ def run():
 
     cmd = path.join(path.dirname(__file__), 'mail_relay.sh')
 
-    retcode, choice = console.menu(TITLE, TEXT, [
-        ('SendinBlue', "TurnKey's preferred SMTP gateway"),
-        ('Custom', 'Custom mail relay configuration'),
-        ('Deconfigure', 'Erase current mail relay settings')
-    ])
+
+    
+
+    if interactive:
+        retcode, choice = console.menu(TITLE, TEXT, [
+            ('SendinBlue', "TurnKey's preferred SMTP gateway"),
+            ('Custom', 'Custom mail relay configuration'),
+            ('Deconfigure', 'Erase current mail relay settings')
+        ])
+    else:
+        choice = os.getenv('CC_MAILRELAY_PRESET')
 
     if choice:
         if choice == 'Deconfigure':
@@ -75,26 +81,32 @@ def run():
 
         field_width = field_limit = 60
 
-        while 1:
-            fields = [
-                ('Host', host, field_width, field_limit),
-                ('Port', port, field_width, field_limit),
-                ('Login', login, field_width, field_limit),
-                ('Password', password, field_width, field_limit)
-            ]
+        if interactive:
+            while 1:
+                fields = [
+                    ('Host', host, field_width, field_limit),
+                    ('Port', port, field_width, field_limit),
+                    ('Login', login, field_width, field_limit),
+                    ('Password', password, field_width, field_limit)
+                ]
 
-            retcode, values = console.form(TITLE, FORMNOTE, fields)
+                retcode, values = console.form(TITLE, FORMNOTE, fields)
 
-            if retcode is not 0:
-                console.msgbox(TITLE, 'You have cancelled the configuration process. No relaying of mail will be performed.')
-                return
+                if retcode is not 0:
+                    console.msgbox(TITLE, 'You have cancelled the configuration process. No relaying of mail will be performed.')
+                    return
 
-            host, port, login, password = tuple(values)
+                host, port, login, password = tuple(values)
 
-            if testsettings(*values):
-                break
-            else:
-                console.msgbox(TITLE, 'Could not connect with supplied parameters. Please check config and try again.')
+                if testsettings(*values):
+                    break
+                else:
+                    console.msgbox(TITLE, 'Could not connect with supplied parameters. Please check config and try again.')
+        else:
+            host = os.getenv('CC_MAILRELAY_HOST')
+            port = os.getenv('CC_MAILRELAY_PORT')
+            login = os.getenv('CC_MAILRELAY_LOGIN')
+            password = os.getenv('CC_MAILRELAY_PASSWORD')
 
         system(cmd, host, port, login, password)
 

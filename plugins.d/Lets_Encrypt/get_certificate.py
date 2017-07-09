@@ -1,7 +1,8 @@
 """Get Let's Encrypt SSl cert"""
 
 from executil import getoutput, ExecError
-from os import path, remove
+from os import path, remove, getenv
+import sys
 
 TITLE = 'Certificate Creation Wizard'
 
@@ -83,22 +84,27 @@ def run():
 
     canceled = False
 
-    ret = console.yesno(
-        'DNS must be configured before obtaining certificates. '
-        'Incorrectly configured dns and excessive attempts could '
-        'lead to being temporarily blocked from requesting '
-        'certificates.\n\nDo you wish to continue?',
-        autosize=True
-    )
-    if ret:
-        return
-
-    if not path.isdir(dehydrated_conf):
-        console.msgbox(
-            'Error',
-            'Dehydrated not installed or %s not found, dehydrated can be installed with apt from the jessie-backports repo.\n\nMore info: www.turnkeylinux.org/docs/letsencrypt' % dehydrated_conf,
+    if interactive:
+        ret = console.yesno(
+            'DNS must be configured before obtaining certificates. '
+            'Incorrectly configured dns and excessive attempts could '
+            'lead to being temporarily blocked from requesting '
+            'certificates.\n\nDo you wish to continue?',
             autosize=True
         )
+        if ret:
+            return
+
+    if not path.isdir(dehydrated_conf):
+        ERR_MSG= 'Dehydrated not installed or %s not found, dehydrated can be installed with apt from the jessie-backports repo.\n\nMore info: www.turnkeylinux.org/docs/letsencrypt' % dehydrated_conf
+        if interactive:
+            console.msgbox(
+                'Error',ERR_MSG,
+                autosize=True
+            )
+        else:
+            sys.stderr.write('Error: %s\n' % ERR_MSG)
+
         return
 
     domains = load_domains()
@@ -116,30 +122,43 @@ def run():
     values = domains
 
     while True:
-        while True:
-            fields = [
-                ('Domain', values[0], field_width, 255),
-                ('Subdomain 1', values[1], field_width, 255),
-                ('Subdomain 2', values[2], field_width, 255),
-                ('Subdomain 3', values[3], field_width, 255),
-                ('Subdomain 4', values[4], field_width, 255),
-            ]
-            ret, values = console.form(TITLE, DESC, fields, autosize=True)
+        if interactive:
+            while True:
+                fields = [
+                    ('Domain', values[0], field_width, 255),
+                    ('Subdomain 1', values[1], field_width, 255),
+                    ('Subdomain 2', values[2], field_width, 255),
+                    ('Subdomain 3', values[3], field_width, 255),
+                    ('Subdomain 4', values[4], field_width, 255),
+                ]
+                ret, values = console.form(TITLE, DESC, fields, autosize=True)
 
-            if ret != 0:
-                canceled = True
-                break
+                if ret != 0:
+                    canceled = True
+                    break
 
+                msg = invalid_domains(values[0], values[1:])
+                if msg:
+                    console.msgbox('Error', msg)
+                    continue
+
+                if ret is 0:
+                    ret2 = console.yesno('This will overwrite previous settings and check for certificate, continue?')
+                    if ret2 is 0:
+                        save_domains(values)
+                        break
+        else:
+            values = (
+                getenv('CC_LETSENCRYPT_DOMAIN'),
+                getenv('CC_LETSENCRYPT_SUBDOMAIN1'),
+                getenv('CC_LETSENCRYPT_SUBDOMAIN2'),
+                getenv('CC_LETSENCRYPT_SUBDOMAIN3'),
+                getenv('CC_LETSENCRYPT_SUBDOMAIN4')
+            )
             msg = invalid_domains(values[0], values[1:])
             if msg:
-                console.msgbox('Error', msg)
-                continue
-
-            if ret is 0:
-                ret2 = console.yesno('This will overwrite previous settings and check for certificate, continue?')
-                if ret2 is 0:
-                    save_domains(values)
-                    break
+                stderr.write('Error: %s' % msg)
+                break
 
 
         if canceled:

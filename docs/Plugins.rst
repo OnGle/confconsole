@@ -184,6 +184,31 @@ There are 3 functions exposed from the event manager
     this calls each handler in the order they were registered for the given event.
 
 
+Preseeding
+----------
+
+Preseeding is useful when you want to run a confconsole plugin from the inithooks
+during a non-interactive setup.
+
+At this point in time the env variables are.
+
+| Plugin          | Variable                  | Value                      |
+|-----------------|---------------------------|----------------------------|
+| hostname        | CC_HOSTNAME_HOSTNAME      | hostname to set            |
+| apt             | CC_APT_PROXY              | apt http proxy             |
+| get_certificate | CC_LETSENCRYPT_DOMAIN     | master domain to register  |
+| get_certificate | CC_LETSENCRYPT_SUBDOMAIN1 | sub domain to register     |
+| get_certificate | CC_LETSENCRYPT_SUBDOMAIN2 | sub domain to register     |
+| get_certificate | CC_LETSENCRYPT_SUBDOMAIN3 | sub domain to register     |
+| get_certificate | CC_LETSENCRYPT_SUBDOMAIN4 | sub domain to register     |
+| cert_auto_renew | CC_LETSENCRYPT_AUTORENEW  | enable/disable auto renew  |
+| mail_relay      | CC_MAILRELAY_PRESET       | mail relay preset settings |
+| mail_relay      | CC_MAILRELAY_HOST         | host of mail relay         |
+| mail_relay      | CC_MAILRELAY_PORT         | port of mail relay         |
+| mail_relay      | CC_MAILRELAY_LOGIN        | login of mail relay        |
+| mail_relay      | CC_MAILRELAY_PASSWORD     | password of mail relay     |
+
+
 Other Information
 -----------------
 
