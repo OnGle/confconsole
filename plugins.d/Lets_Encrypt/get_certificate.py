@@ -20,12 +20,12 @@ https://www.turnkeylinux.org/docs/letsencrypt#advanced
 dehydrated_conf = '/etc/dehydrated'
 domain_path = dehydrated_conf+'/confconsole.domains.txt'
 
-default_domains = '''# please use this file with confconsole or
-# alternatively use dehydrated with it's appropriate
-# configuration directly
-'''
+domains_lock_comment = '## Automatically Generated file from Confconsole, remove this header if editing by hand or your changes may be clobbered!'
+
+default_domains = domains_lock_comment + '\n'
 example_domain = 'example.com'
 # XXX Debug paths
+
 
 def load_domains():
     ''' Loads domain conf, writes default config if non-existant. Expects
@@ -35,11 +35,17 @@ def load_domains():
     else:
         domains = []
         with open(domain_path, 'r') as fob:
-            for line in fob:
-                line = line.strip()
-                if line and not line.startswith('#'):
-                    domains = line.split(' ')
-                    break
+            lines = fob.readlines()
+            if len(lines) >= 1 and lines[0] == domains_lock_comment:
+                for line in lines:
+                    line = line.strip()
+                    if line and not line.startswith('#'):
+                        domains = line.split(' ')
+                        break
+            else:
+                # domains.txt lock comment not present
+                # better safe than sorry, bail out
+                return
 
         while len(domains) > 5:
             domains.pop()
@@ -120,6 +126,17 @@ def run():
         return
 
     domains = load_domains()
+    if domains is None: # bailed out due to no lock comment
+        dehydrated_wrapper_path = path.join(path.dirname(PLUGIN_PATH), 'dehydrated-wrapper')
+        console.msgbox(
+            'Error',
+            'domains.txt was either not created by confconsole or has been edited by hand,'
+            ' refusing to work with it!\n\n(running dehydrated-wrapper directly will still work'
+            ' though if the format is valid, see "{}")'.format(dehydrated_wrapper_path),
+            autosize=True)
+        return
+
+
     m = invalid_domains(domains)
     
     if m:

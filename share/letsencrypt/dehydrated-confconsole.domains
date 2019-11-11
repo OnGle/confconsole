@@ -1,4 +1,2 @@
-# please use this file with confconsole or
-# alternatively use dehydrated with it's appropriate
-# configuration directly
+## Automatically Generated file from Confconsole, remove this header if editing by hand or your changes may be clobbered!
 example.com www.example.com ftp.example.com
