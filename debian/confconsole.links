@@ -1,2 +1,3 @@
 etc/confconsole usr/lib/confconsole/conf
 usr/lib/confconsole/confconsole.py usr/bin/confconsole
+usr/lib/confconsole/plugins.d/Lets_Encrypt/dehydrated-wrapper usr/bin/turnkey-dehydrated-wrapper
